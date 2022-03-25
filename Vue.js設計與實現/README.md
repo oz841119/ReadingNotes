@@ -7,6 +7,6 @@
 ## 心得目錄
 |章節|描述|
 |:-:|:-:|
-|前言|LINK|
+|[前言]|選擇閱讀本書的原因|
 
-[LINK]: https://github.com/oz841119/ReadingNotes/tree/master/Vue.js%E8%A8%AD%E8%A8%88%E8%88%87%E5%AF%A6%E7%8F%BE/%E5%89%8D%E8%A8%80
+[前言]: https://github.com/oz841119/ReadingNotes/tree/master/Vue.js%E8%A8%AD%E8%A8%88%E8%88%87%E5%AF%A6%E7%8F%BE/%E5%89%8D%E8%A8%80
