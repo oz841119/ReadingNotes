@@ -106,6 +106,7 @@ for(let i = 0 ; i < 10000 ; i++) {
 |:-:|:-:|:-:|
 |**JavaScript運算**|創建物件(New VNode) + diff|渲染HTML字串|
 |**DOM運算**|找到差異點並更新|銷毀舊的DOM<br>新建新的DOM|
+
 在比較JS及DOM層面運算的時候提到效率相差甚遠的問題，甚至不在同一個量級上，所以diff所產生的**JS運算額外消耗**是能夠遠低於innerHTML銷毀並重建的**DOM運算消耗**
 
 那麼原生JS(指createElement等方法)的DOM運算也就是**命令式更新**而已，比起虛擬DOM運算少了**找出差異點**，自然性能是最優秀的，但可維護性卻遠低於**聲明式告知Vue進行更新**。
@@ -113,4 +114,66 @@ for(let i = 0 ; i < 10000 ; i++) {
 ---
 ## 運行時及編譯時
 ---
-(20220326)
+### 運行時
+假設想在一個純運行時的框架中模擬一個簡易的Render函數，作用是將物件渲染到DOM上。
+```js
+    const obj = { // 建立一個想添加的樹形結構物件，用來描述DOM結構
+      tag: `div`, // HTML的Tag標籤
+      children: [ // 該標籤下的子節點 若為String則指的是Text節點(文本內容)，為陣列則包含其他子節點
+        {
+          tag: `span`,
+          children: `Hello World`
+        },
+        {
+          tag: `a`,
+          children: `Link`
+        },
+        {
+          tag: `div`,
+          children: [
+            {
+              tag: `p`,
+              children: `段落`
+            }
+          ]
+        }
+      ]
+    }
+    Render(obj, document.body)
+
+    function Render(obj, root) {
+      const el = document.createElement(obj.tag) // 打算創建的HTML Tag標籤
+      if(typeof obj.children === `string`) {
+        const text = document.createTextNode(obj.children)
+        el.appendChild(text) // 在指定的HTML Tag創建一個文本節點
+      } 
+      else if(obj.children) {
+        obj.children.forEach((child) => Render(child, el)) // 遍歷children陣列，並遞迴 (以本次循環得到的el及物件或String作為傳參再次調用Render函數)
+      }
+      root.appendChild(el) //最終將整個el掛載在root中
+    }
+```
+> <font size="2">這裡的Render函數僅模擬了Tag標籤及其他子節點，未包含Tag中的屬性等...</font>
+
+當JavaScript在運行時，執行了Render函數並傳入了用戶期望了樹形結構物件，最終目的是將他渲染成一個用戶可見的HTML文本，但開發者們仍需要自行撰寫樹形結構物件，他也脫離了以往我們編寫HTML的習慣，未免也太麻煩了。
+
+於是編寫類似於HTML結構，再將這個結構在「編譯時」編譯成樹形結構物件的想法就出來了。
+```html
+<!-- HTML like -->
+<div>
+  <span> Hello World </span>
+</div>
+```
+<center><font size="3">&darr; 編譯後 &darr;</font></center>
+
+```js
+const obj = {
+  tag: `div`,
+  children: [
+    {
+      tag: `span`,
+      children: `Hello World`
+    }
+  ]
+}
+```
