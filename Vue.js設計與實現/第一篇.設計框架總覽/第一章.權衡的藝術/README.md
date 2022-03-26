@@ -153,19 +153,15 @@ for(let i = 0 ; i < 10000 ; i++) {
       root.appendChild(el) //最終將整個el掛載在root中
     }
 ```
-> <font size="2">這裡的Render函數僅模擬了Tag標籤及其他子節點，未包含Tag中的屬性等...</font>
+> 這裡的Render函數僅模擬了Tag標籤及其他子節點，未包含Tag中的屬性等...
 
-當JavaScript在運行時，執行了Render函數並傳入了用戶期望了樹形結構物件，最終目的是將他渲染成一個用戶可見的HTML文本，但開發者們仍需要自行撰寫樹形結構物件，他也脫離了以往我們編寫HTML的習慣，未免也太麻煩了。
-
-於是編寫類似於HTML結構，再將這個結構在「編譯時」編譯成樹形結構物件的想法就出來了。
+當JavaScript在運行時，執行了Render函數並傳入了用戶期望了樹形結構物件，最終目的是將他渲染成一個用戶可見的HTML文本，但開發者們仍需要自行撰寫樹形結構物件，他也脫離了以往我們編寫HTML的習慣，未免也太麻煩了，於是編寫HTML結構，再將這個結構在「編譯時」編譯成樹形結構物件的想法就出來了，如圖所示。
 ```html
-<!-- HTML like -->
 <div>
   <span> Hello World </span>
 </div>
 ```
-<center><font size="3">&darr; 編譯後 &darr;</font></center>
-
+&darr; 編譯後 &darr;
 ```js
 const obj = {
   tag: `div`,
@@ -177,3 +173,31 @@ const obj = {
   ]
 }
 ```
+</br>
+### 運行時編譯
+為了實現這個目的，我們需要編寫一個名為Compiler的feature，使得HTML字串能夠在JavaScript在運行的時候透過Compiler函數編譯為樹形結構物件，就像這樣。
+> Compiler函數的具體實現尚未提及
+
+```js
+// 編寫HTML字串
+const html = `
+  <div>
+    <span> Hello World </span>
+  </div>
+`
+
+// 調用Compiler函數將HTML字串編譯為樹狀結構物件
+const obj = Compiler(html)
+
+// 調用Render函數渲染為DOM
+Render(obj, document.body)
+```
+</br>
+
+**既然如此，為何不能直接將html字串編譯為命令式程式碼(直接地操作DOM，不透過Render函數操作了)？**
+如此一來，框架就會成了「純編譯時」，編輯器將程式碼編譯完成後交由執行環境執行，性能可能會更好，但靈活性會降低。(當然，這也是業內正在追求的。)
+
+**所以，Vue成了「運行時」＋「編譯時」的設計**
+便於提前分析程式碼，將可能改變和不會改的內容分離出來，提交給Render函數進行更好的優化。[關於Vue在編譯優化相關的內容?( 待更新 )](#待補充)
+
+(20220327)
