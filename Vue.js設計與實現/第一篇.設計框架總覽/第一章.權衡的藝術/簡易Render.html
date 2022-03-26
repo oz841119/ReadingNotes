@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>簡易Render函數</title>
+</head>
+<body>
+  <script>
+    const obj = { // 建立一個想添加的樹形結構物件，用來描述DOM結構
+      tag: `div`, // HTML的Tag標籤
+      children: [ // 該標籤下的子節點 若為String則指的是Text節點(文本內容)，為陣列則包含其他子節點
+        {
+          tag: `span`,
+          children: `Hello World`
+        },
+        {
+          tag: `a`,
+          children: `Link`
+        },
+        {
+          tag: `div`,
+          children: [
+            {
+              tag: `p`,
+              children: `段落`
+            }
+          ]
+        }
+      ]
+    }
+    Render(obj, document.body)
+
+    function Render(obj, root) {
+      const el = document.createElement(obj.tag) // 打算創建的HTML Tag標籤
+      if(typeof obj.children === `string`) {
+        const text = document.createTextNode(obj.children)
+        el.appendChild(text) // 在指定的HTML Tag創建一個文本節點
+      } 
+      else if(obj.children) {
+        obj.children.forEach((child) => Render(child, el)) // 遍歷children陣列，並遞迴 (以本次循環得到的el及物件或String作為傳參再次調用Render函數)
+      }
+      root.appendChild(el) //最終將整個el掛載在root中
+    }
+  </script>
+</body>
+</html>
