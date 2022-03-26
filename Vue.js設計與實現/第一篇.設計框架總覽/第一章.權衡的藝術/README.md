@@ -174,6 +174,7 @@ const obj = {
 }
 ```
 </br>
+
 ### 運行時編譯
 為了實現這個目的，我們需要編寫一個名為Compiler的feature，使得HTML字串能夠在JavaScript在運行的時候透過Compiler函數編譯為樹形結構物件，就像這樣。
 > Compiler函數的具體實現尚未提及
