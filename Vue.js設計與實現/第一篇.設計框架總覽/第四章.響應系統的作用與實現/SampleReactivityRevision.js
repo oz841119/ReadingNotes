@@ -12,9 +12,13 @@ const obj = new Proxy(data, {
     deps.add(activeEffect) // 將副作用函數存入deps中
     return target[key]
   },
+
   set(target, key, newVal) {
     target[key] = newVal // 使原數據為新值
-    bucket.forEach(fn => fn()) // 尋訪bucket中的函數並執行 *
+    const depsMap = bucket.get(target) // 從bucket確認obj代理物件是否存在
+    if(!depsMap) return // 若是沒有則直接return
+    const effects = depsMap.get(key) // 獲取副作用函數的key
+    effects && effects.forEach(fn => fn()) // 若具有副作用函數 則遍歷執行
     return true
   }
 })
@@ -34,6 +38,6 @@ effect(
   }
 )
 
-setTimeout(() => {obj.notExist = `Hello Vue3`}, 3000)
+setTimeout(() => {obj.text = `Hello Vue3`}, 3000)
 
 // ** ------------------------------- ** //

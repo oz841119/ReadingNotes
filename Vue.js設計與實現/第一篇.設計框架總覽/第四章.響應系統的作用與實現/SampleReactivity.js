@@ -32,3 +32,5 @@ effect(
 )
 
 setTimeout(() => {obj.notExist = `Hello Vue3`}, 3000)
+
+// ** ------------------------------- ** //
