@@ -54,7 +54,10 @@ obj.text = 'New Hello World' // 當這句執行完畢時，希望自動去調用
 </br>
 
 **設置**
+
 ![imgag2](./image2.svg)
+
+</br>
 </br>
 
 為了完成對目標的讀取及設置的攔截，Vue3使用Proxy的方式去進行代理。
