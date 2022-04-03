@@ -1,36 +1,31 @@
-const data = { text: 'Hello World' }  // 數據
-const bucket = new Set()  // 用以存放副作用函數
+const bucket = new Set()
+const data = { text: 'Hello World' }
 
-/* 代理數據 */
-const obj = new Proxy(data, {
+function effect(fn) {
+  activeEffect = fn // 將副作用函數存入全局變量
+  fn() // 執行副作用函數
+}
+
+const obj = new Proxy(data, { // 代理原始數據
+  // 攔截讀取
   get(target, key) {
-    if(activeEffect) {
-      bucket.add(activeEffect) // 將effect函數添加到bucket *
+    if(activeEffect) { // 如果activeEffect有值
+      bucket.add(activeEffect) // 則添加入集合
     }
     return target[key]
   },
-  set(target, key, newVal) {
-    target[key] = newVal // 使原數據為新值
-    bucket.forEach(fn => fn()) // 尋訪bucket中的函數並執行 *
+
+  // 攔截設置
+  set(target, key, newValue) {
+    target[key] = newValue // 將原始數據修改為新值
+    bucket.forEach(fn => fn()) // 執行該集合中的所有函數
     return true
   }
 })
 
-/* 撰寫一個註冊器 */
-let activeEffect  // 使用一個全局變存放被註冊的副作用函數
-function effect(fn) { // 用於註冊副作用函數，接收一個function
-  activeEffect = fn 
-  fn()
-}
+effect(() => { // 將副作用函數傳入
+  document.body.innerHTML = obj.text
+})
 
-/* 使用註冊器 */
-effect(
-  () => {
-    console.log(`effect fun`);
-    document.body.innerText = obj.text
-  }
-)
-
-setTimeout(() => {obj.notExist = `Hello Vue3`}, 3000)
-
-// ** ------------------------------- ** //
+obj.text = '123'
+obj.text = '24'
