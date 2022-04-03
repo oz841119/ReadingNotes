@@ -49,6 +49,7 @@ obj.text = 'New Hello World' // 當這句執行完畢時，希望自動去調用
 * obj.text被修改時，需要去觸發被依賴的副作用函數。
 
 **讀取**
+
 ![imgag1](./image1.svg)
 </br>
 
