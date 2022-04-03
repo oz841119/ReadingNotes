@@ -43,7 +43,7 @@ obj.text = 'New Hello World' // 當這句執行完畢時，希望自動去調用
 接下來我們去思考，當obj.text執行完畢後，如何去觸發一個effect函數?
 > 排除掉Vue2的做法，這裡我的第一個念頭是addEventListener，但我嘗試後對addEventListener是EventTarget的方法這個概念有更深入的了解，並非一般的js物件擁有的方法。
 
-這裡先找到了兩個線索
+這裡先找到了三個線索
 * 當副作用函數(effect)執行時，會發生對目標的「讀取」操作
 * 當obj.text被修改時，會發生對目標(obj.text)的「設置」操作
 * obj.text被修改時，需要去觸發被依賴的副作用函數。
@@ -122,9 +122,67 @@ const obj = new Proxy(data, { // 代理原始數據
     return true
   }
 })
-
 ```
-
+</br>
 目前整個響應式系統的流程將為這樣
 
 ![image3](./image3.svg)
+> 設置操作中終將再觸發一次讀取的問題暫且先擱置一旁
+
+</br>
+
+但現在存在一個問題，假如我們去設置一個不存在的屬性，仍然會導致副作用函數被調用，也就是重新觸發了Proxy的set()，這意味著物件的所有屬性和副作用函數相依賴。
+
+```js
+obj.notExist = '一個原始數據不存在的屬性'
+```
+
+其中的原因是因為bucket是一種Set數據結構，他沒辦法將代理物件的屬性和副作用函數個別進行依賴，為了解決這個問題，我們需要重新設計bucket的設計，其目的是「將屬性和副作用函數進行個別的依賴」，如圖所示。
+
+![image4](./image4.svg)
+
+可以看到，每個物件屬性可以擁有多個依賴的副作用函數，而副作用函數可能同時被多個屬性依賴，所以我們將bucket由Set結構改為WeakMap結構，並且修改Proxy的Handle來達到這個目的。
+
+```js
+const bucket = new Map()
+
+const obj = new Proxy(data, { // 代理原始數據
+  // 攔截讀取
+  get(target, key) {
+    if(!activeEffect) return
+
+    let depsMap = bucket.get(target) //從bucket取得原始數據
+
+    if(!depsMap) { // 如果depsMap沒有值的話
+      // 則在bucket(WeakMap)中去設立一個Key為原始數據，Value為一個空Map
+      bucket.set(target, (depsMap = new Map))
+    }
+
+    let deps = depsMap.get(key) // 透過讀取的Key取得依賴的副作用函數
+
+    if(!deps) { // 如果deps沒有值的話
+      // 則以原始數據的Key為Map的Key，Value為一個空集合
+      depsMap.set(key, (deps = new Set()))
+    }
+
+    deps.add(activeEffect) // 最後將副作用函數添加入集合中
+    return target[key]
+  },
+
+  // 攔截設置
+  set(target, key, newValue) {
+    target[key] = newValue // 將原始數據修改為新值
+    const depsMap = bucket.get(target) // 藉由target從bucket中取得被依賴的key(Map)
+    if(!depsMap) return
+    const effects = despMap.get(key) // 再藉由Key找出所有被依賴的副作用函數(Set)
+    effects && effects.forEach(fn => fn()) // 有值的執行所有副作用函數
+    return true
+  }
+})
+```
+</br>
+這段看著比較複雜，比較具象的引用圖就像這樣。
+
+![Vue響應式引用圖](./Vue%E9%9F%BF%E6%87%89%E5%BC%8F%E5%BC%95%E7%94%A8%E5%9C%96.svg)
+
+(20220404未完)
