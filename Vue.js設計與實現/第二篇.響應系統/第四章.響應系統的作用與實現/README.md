@@ -127,7 +127,6 @@ const obj = new Proxy(data, { // 代理原始數據
 目前整個響應式系統的流程將為這樣
 
 ![image3](./image3.svg)
-> 設置操作中終將再觸發一次讀取的問題暫且先擱置一旁
 
 </br>
 
@@ -144,7 +143,7 @@ obj.notExist = '一個原始數據不存在的屬性'
 可以看到，每個物件屬性可以擁有多個依賴的副作用函數，而副作用函數可能同時被多個屬性依賴，所以我們將bucket由Set結構改為WeakMap結構，並且修改Proxy的Handle來達到這個目的。
 
 ```js
-const bucket = new Map()
+const bucket = new WeakMap()
 
 const obj = new Proxy(data, { // 代理原始數據
   // 攔截讀取
@@ -174,7 +173,7 @@ const obj = new Proxy(data, { // 代理原始數據
     target[key] = newValue // 將原始數據修改為新值
     const depsMap = bucket.get(target) // 藉由target從bucket中取得被依賴的key(Map)
     if(!depsMap) return
-    const effects = despMap.get(key) // 再藉由Key找出所有被依賴的副作用函數(Set)
+    const effects = depsMap.get(key) // 再藉由Key找出所有被依賴的副作用函數(Set)
     effects && effects.forEach(fn => fn()) // 有值的執行所有副作用函數
     return true
   }
@@ -185,4 +184,5 @@ const obj = new Proxy(data, { // 代理原始數據
 
 ![Vue響應式引用圖](./Vue%E9%9F%BF%E6%87%89%E5%BC%8F%E5%BC%95%E7%94%A8%E5%9C%96.svg)
 
-(20220404未完，圖有深色模式顯示問題)
+這樣的做法，當我們設置一個不存在或未進入Map(成為響應式數據)Key，僅僅觸發了設置操作，因為沒有依賴的副作用函數，所以不會執行任何副作用函數。
+至於bucket為何採用WeakMap的數據形式，其中的內容會比較複雜，單單對我們目前已經建構出的微型響應式系統而言，原文只提到關於JS的垃圾回收機制。對於實際上的Vue響應式系統，我查詢資料的時候也提到包括了重複代理及關於性能上的問題，不過後者的影響較小而已，建議有興趣的朋友可以自行查閱文章。
